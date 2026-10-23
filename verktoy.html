@@ -289,7 +289,8 @@
   var CONFIG = {
     repo: "JohnLLA/sd-verktoy-releases",   // public repo with release files only
     sourceRepo: "https://github.com/JohnLLA/sd-verktoykasse",
-    cacheMinutes: 10
+    cacheMinutes: 10,
+    downloadsOpen: false                  // false: buttons stay visible, nothing can be downloaded
   };
 
   // Minimum macOS per tool package, as in tools.json from the "katalog" release.
@@ -380,7 +381,13 @@
   var root = document.getElementById("sd-vk");
   var $ = function (id) { return document.getElementById(id); };
   var releasesUrl = "https://github.com/" + CONFIG.repo + "/releases";
-  $("vk-all-releases").href = releasesUrl;
+  if (CONFIG.downloadsOpen) {
+    $("vk-all-releases").href = releasesUrl;
+  } else {
+    var allReleases = $("vk-all-releases");
+    allReleases.previousSibling.textContent = allReleases.previousSibling.textContent.replace(/\s*·\s*$/, "");
+    allReleases.remove();
+  }
   $("vk-source").href = CONFIG.sourceRepo;
 
   function el(tag, attrs, children) {
@@ -507,6 +514,12 @@
 
   function renderApp(p, app, failed) {
     var cfg = PLATFORM[p], btn = $("vk-btn"), label = $("vk-btn-label"), meta = $("vk-meta");
+    if (!CONFIG.downloadsOpen) {
+      btn.href = "#"; btn.setAttribute("aria-disabled", "true");
+      label.textContent = cfg.button;
+      meta.textContent = "Nedlastingen er midlertidig stengt.";
+      return;
+    }
     if (failed) {
       btn.href = releasesUrl; btn.setAttribute("aria-disabled", "false");
       label.textContent = cfg.button;
@@ -535,7 +548,7 @@
       renderApp(p, app, false);
       renderTools(p, rels);
       var src = findSource(rels);
-      if (src) $("vk-source").href = src.url;
+      if (src && CONFIG.downloadsOpen) $("vk-source").href = src.url;
     }).catch(function () {
       if (root.getAttribute("data-platform") !== p) return;
       renderApp(p, null, true);
